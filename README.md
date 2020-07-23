@@ -1,4 +1,4 @@
-# ConfigurationSubstitutor <img src="logo.png" width="10%" />
+# ConfigurationSubstitutor <img src="logo.png" width="5%" />
 Allows to substitute variables from configuration, this way hostnames, or passwords can be separated and automatically substituted if another configuration entry references them.
 Scenarios could be that you have the password from an Azure KeyVault and the connection string defined in appsettings. The connection string can reference the password.
 Another scenario is that you have multiple configuration entries for the same domain, don't duplicate that information anymore, reference it.
