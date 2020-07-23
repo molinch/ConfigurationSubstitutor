@@ -4,11 +4,35 @@
     <TargetFramework>netstandard2.1</TargetFramework>
 	<Nullable>enable</Nullable>
 	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	<PackageId>ConfigurationSubstitutor</PackageId>
+	<Authors>molinch</Authors>
+	<Company>Fabien Molinet</Company>
+	<Product>ConfigurationSubstitutor</Product>
+	<Description>Allows to substitute variables from configuration, this way hostnames, or passwords can be separated and automatically substituted if another configuration entry references them.
+Scenarios could be that you have the password from an Azure KeyVault and the connection string defined in appsettings. The connection string can reference the password.
+Another scenario is that you have multiple configuration entries for the same domain, don't duplicate that information anymore, reference it.</Description>
+	<PackageLicenseFile>LICENSE</PackageLicenseFile>
+	<PackageIcon>logo.png</PackageIcon>
+	<RepositoryUrl>https://github.com/molinch/ConfigurationSubstitutor</RepositoryUrl>
+	<RepositoryType>GitHub</RepositoryType>
+	<PackageProjectUrl>https://github.com/molinch/ConfigurationSubstitutor</PackageProjectUrl>
+	<PackageTags>netcore options configuration substitute substitution substituted variable aspnet</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\logo.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
