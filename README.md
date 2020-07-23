@@ -1,6 +1,8 @@
 # ConfigurationSubstitutor <img src="logo.png" width="5%" />
 Allows to substitute variables from configuration, this way hostnames, or passwords can be separated and automatically substituted if another configuration entry references them.
+
 Scenarios could be that you have the password from an Azure KeyVault and the connection string defined in appsettings. The connection string can reference the password.
+
 Another scenario is that you have multiple configuration entries for the same domain, don't duplicate that information anymore, reference it.
 
 # Nuget
@@ -10,7 +12,7 @@ The nuget package name is `ConfigurationSubstitutor`: https://www.nuget.org/pack
 
 ## ASP.NET Core
 To add it to ASP.NET Core configuration simply place `.EnableSubstitutions()` last.
-Make sure `.EnableSubstitutions()` is always called after all other configurations are added, else it won't behave properly!
+Make sure it is always called after all other configurations are added, else it won't behave properly!
 
 ```c#
 public static IHostBuilder CreateHostBuilder(string[] args) =>
