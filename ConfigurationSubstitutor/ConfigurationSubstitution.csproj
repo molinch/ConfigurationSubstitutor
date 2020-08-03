@@ -17,6 +17,7 @@ Another scenario is that you have multiple configuration entries for the same do
 	<RepositoryType>GitHub</RepositoryType>
 	<PackageProjectUrl>https://github.com/molinch/ConfigurationSubstitutor</PackageProjectUrl>
 	<PackageTags>netcore options configuration substitute substitution substituted variable aspnet</PackageTags>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
