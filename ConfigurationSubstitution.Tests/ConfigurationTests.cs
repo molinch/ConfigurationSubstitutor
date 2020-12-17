@@ -130,7 +130,7 @@ namespace ConfigurationSubstitution.Tests
                 {
                     { "TestKey", "Test value {Foobar}" }
                 })
-                .EnableSubstitutions(exceptionOnMissingVariables: true);
+                .EnableSubstitutions();
 
             var configuration = configurationBuilder.Build();
 
@@ -148,7 +148,7 @@ namespace ConfigurationSubstitution.Tests
                 {
                     { "TestKey", "Test value {Foobar}" }
                 })
-                .EnableSubstitutions();
+                .EnableSubstitutions(exceptionOnMissingVariables: false);
 
             var configuration = configurationBuilder.Build();
 

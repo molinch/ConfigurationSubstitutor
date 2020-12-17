@@ -2,16 +2,14 @@
 
 namespace ConfigurationSubstitution
 {
-    using System;
-
     public static class IConfigurationBuilderExtensions
     {
-        public static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, bool exceptionOnMissingVariables = false)
+        public static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, bool exceptionOnMissingVariables = true)
         {
             return EnableSubstitutions(builder, new ConfigurationSubstitutor(exceptionOnMissingVariables));
         }
 
-        public static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = false)
+        public static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true)
         {
             return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables));
         }

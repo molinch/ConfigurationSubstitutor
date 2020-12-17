@@ -11,11 +11,11 @@ namespace ConfigurationSubstitution
         private Regex _findSubstitutions;
         private readonly bool _exceptionOnMissingVariables;
 
-        public ConfigurationSubstitutor(bool exceptionOnMissingVariables = false) : this("{", "}", exceptionOnMissingVariables)
+        public ConfigurationSubstitutor(bool exceptionOnMissingVariables = true) : this("{", "}", exceptionOnMissingVariables)
         {
         }
 
-        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = false)
+        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true)
         {
             _startsWith = substitutableStartsWith;
             _endsWith = substitutableEndsWith;
