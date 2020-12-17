@@ -9,16 +9,18 @@ namespace ConfigurationSubstitution
         private readonly string _startsWith;
         private readonly string _endsWith;
         private Regex _findSubstitutions;
+        private readonly bool _exceptionOnMissingVariables;
 
-        public ConfigurationSubstitutor() : this("{", "}")
+        public ConfigurationSubstitutor(bool exceptionOnMissingVariables = false) : this("{", "}", exceptionOnMissingVariables)
         {
         }
 
-        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith)
+        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = false)
         {
             _startsWith = substitutableStartsWith;
             _endsWith = substitutableEndsWith;
             _findSubstitutions = new Regex(@"(?<=" + Regex.Escape(_startsWith) + @")[^}{]*(?="+ Regex.Escape(_endsWith) + @")", RegexOptions.Compiled);
+            _exceptionOnMissingVariables = exceptionOnMissingVariables;
         }
 
         public string GetSubstituted(IConfiguration configuration, string key)
@@ -34,7 +36,14 @@ namespace ConfigurationSubstitution
             var captures = _findSubstitutions.Matches(value).Cast<Match>().SelectMany(m => m.Captures.Cast<Capture>());
             foreach (var capture in captures)
             {
-                value = value.Replace(_startsWith + capture.Value + _endsWith, configuration[capture.Value]);
+                var substitutedValue = configuration[capture.Value];
+
+                if (substitutedValue == null && _exceptionOnMissingVariables)
+                {
+                    throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
+                }
+
+                value = value.Replace(_startsWith + capture.Value + _endsWith, substitutedValue);
             }
             return value;
         }

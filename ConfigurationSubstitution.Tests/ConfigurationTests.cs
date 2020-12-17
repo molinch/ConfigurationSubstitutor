@@ -121,5 +121,39 @@ namespace ConfigurationSubstitution.Tests
 
             substituted.Should().Be("Boyz n the hood");
         }
+
+        [Fact]
+        public void Should_throw_for_non_resolved_variable()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "TestKey", "Test value {Foobar}" }
+                })
+                .EnableSubstitutions(exceptionOnMissingVariables: true);
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            Action act = () => _ = configuration["TestKey"];
+
+            act.Should().Throw<UndefinedConfigVariableException>().WithMessage("*variable*{Foobar}*");
+        }
+
+        [Fact]
+        public void Should_ignore_non_resolved_variable()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "TestKey", "Test value {Foobar}" }
+                })
+                .EnableSubstitutions();
+
+            var configuration = configurationBuilder.Build();
+
+            var value = configuration["TestKey"];
+            value.Should().Be("Test value ");
+        }
     }
 }
