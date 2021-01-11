@@ -155,5 +155,98 @@ namespace ConfigurationSubstitution.Tests
             var value = configuration["TestKey"];
             value.Should().Be("Test value ");
         }
+
+        [Fact] // covers https://github.com/molinch/ConfigurationSubstitutor/issues/4
+        public void Should_get_substituted_value_when_multiple_matches_present()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                { "Foo", "Works with $(Var1) and $(Var2)" },
+                { "Var1", "one" },
+                { "Var2", "two" }
+                })
+                .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Works with one and two");
+        }
+
+        [Fact]
+        public void Should_get_substituted_value_when_using_different_substituable_pattern()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                { "Foo", "Hello <<Var>>" },
+                { "Var", "world" }
+                })
+                .EnableSubstitutions("<<", ">>");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello world");
+        }
+
+        [Fact]
+        public void Should_not_get_substituted_value_when_no_match()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                { "Foo", "Hello world, nothing to see here" }
+                })
+                .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello world, nothing to see here");
+        }
+
+        [Fact]
+        public void Should_not_get_substituted_value_when_not_maching_start_tag()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                { "Foo", "Hello (world)" }
+                })
+                .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello (world)");
+        }
+
+        [Fact]
+        public void Should_not_get_substituted_value_when_no_end_tag()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                { "Foo", "Hello $(Var what's up ?" }
+                })
+                .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello $(Var what's up ?");
+        }
     }
 }

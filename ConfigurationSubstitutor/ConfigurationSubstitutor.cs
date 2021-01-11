@@ -19,7 +19,10 @@ namespace ConfigurationSubstitution
         {
             _startsWith = substitutableStartsWith;
             _endsWith = substitutableEndsWith;
-            _findSubstitutions = new Regex(@"(?<=" + Regex.Escape(_startsWith) + @")[^}{]*(?="+ Regex.Escape(_endsWith) + @")", RegexOptions.Compiled);
+            var escapedStart = Regex.Escape(_startsWith);
+            var escapedEnd = Regex.Escape(_endsWith);
+            _findSubstitutions = new Regex(@"(?<=" + escapedStart + @")[^" + escapedStart + escapedEnd + "]*(?=" + escapedEnd + @")",
+                RegexOptions.Compiled);
             _exceptionOnMissingVariables = exceptionOnMissingVariables;
         }
 
