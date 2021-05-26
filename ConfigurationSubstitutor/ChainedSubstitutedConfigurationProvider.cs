@@ -51,9 +51,12 @@ namespace ConfigurationSubstitution
         public IChangeToken GetReloadToken() => _config.GetReloadToken();
 
         /// <summary>
-        /// Loads configuration values from the source represented by this <see cref="IConfigurationProvider"/>.
-        /// </summary>
-        public void Load() { }
+        /// Loads configuration values from the source represented by this <see cref="IConfigurationProvider"/>. 
+        /// </summary> 
+        public void Load()
+        {
+            // Method intentionally left empty.
+        }
 
         /// <summary>
         /// Returns the immediate descendant configuration keys for a given parent path based on this
