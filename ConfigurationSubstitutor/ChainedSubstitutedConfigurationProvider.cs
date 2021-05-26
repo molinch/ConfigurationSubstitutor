@@ -29,8 +29,12 @@ namespace ConfigurationSubstitution
         /// <returns><c>True</c> if a value for the specified key was found, otherwise <c>false</c>.</returns>
         public bool TryGet(string key, out string value)
         {
-            value = _substitutor.GetSubstituted(_config, key);
-            return !string.IsNullOrEmpty(value);
+            if (_substitutor.ConfigurationExists(_config, key))
+                value = _substitutor.ApplySubstitutionFromKey(_config, key);
+            else
+                value = null;
+            
+            return true;
         }
 
         /// <summary>
