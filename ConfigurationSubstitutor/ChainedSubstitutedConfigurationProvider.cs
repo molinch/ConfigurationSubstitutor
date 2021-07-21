@@ -29,12 +29,8 @@ namespace ConfigurationSubstitution
         /// <returns><c>True</c> if a value for the specified key was found, otherwise <c>false</c>.</returns>
         public bool TryGet(string key, out string value)
         {
-            if (_substitutor.ConfigurationExists(_config, key))
-                value = _substitutor.ApplySubstitutionFromKey(_config, key);
-            else
-                value = null;
-            
-            return true;
+            value = _substitutor.GetSubstituted(_config, key);
+            return value != null;
         }
 
         /// <summary>
@@ -51,12 +47,9 @@ namespace ConfigurationSubstitution
         public IChangeToken GetReloadToken() => _config.GetReloadToken();
 
         /// <summary>
-        /// Loads configuration values from the source represented by this <see cref="IConfigurationProvider"/>. 
-        /// </summary> 
-        public void Load()
-        {
-            // Method intentionally left empty.
-        }
+        /// Loads configuration values from the source represented by this <see cref="IConfigurationProvider"/>.
+        /// </summary>
+        public void Load() { }
 
         /// <summary>
         /// Returns the immediate descendant configuration keys for a given parent path based on this
