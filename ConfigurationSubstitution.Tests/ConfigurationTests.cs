@@ -248,5 +248,43 @@ namespace ConfigurationSubstitution.Tests
 
             substituted.Should().Be("Hello $(Var what's up ?");
         }
+
+        [Fact]
+        public void Should_substitute_variable_when_substituted_value_is_empty()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1)" },
+                    { "Var1", string.Empty }
+                })
+                .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be(string.Empty);
+        }
+
+        [Fact]
+        public void Should_throw_exception_when_substituted_value_is_null()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>()
+                {
+                    { "Foo", "$(Var1)" },
+                    { "Var1", null }
+                })
+                .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            Func<string> func = () => configuration["Foo"];
+
+            // Act & assert
+            func.Should().Throw<UndefinedConfigVariableException>();
+        }
     }
 }

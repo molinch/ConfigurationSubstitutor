@@ -29,7 +29,7 @@ namespace ConfigurationSubstitution
         public string GetSubstituted(IConfiguration configuration, string key)
         {
             var value = configuration[key];
-            if (string.IsNullOrWhiteSpace(value)) return value;
+            if (value == null) return value;
 
             return ApplySubstitution(configuration, value);
         }

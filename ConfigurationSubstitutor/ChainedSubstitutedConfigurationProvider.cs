@@ -30,7 +30,7 @@ namespace ConfigurationSubstitution
         public bool TryGet(string key, out string value)
         {
             value = _substitutor.GetSubstituted(_config, key);
-            return !string.IsNullOrEmpty(value);
+            return value != null;
         }
 
         /// <summary>
