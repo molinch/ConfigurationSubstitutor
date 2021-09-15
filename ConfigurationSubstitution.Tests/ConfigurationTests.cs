@@ -286,5 +286,24 @@ namespace ConfigurationSubstitution.Tests
             // Act & assert
             func.Should().Throw<UndefinedConfigVariableException>();
         }
+
+        [Fact]
+        public void Should_get_substituted_value_when_using_long_substituable_pattern()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Hello %(env,Testo)%" },
+                    { "Testo", "world" }
+                })
+                .EnableSubstitutions("%(env,", ")%");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello world");
+        }
     }
 }

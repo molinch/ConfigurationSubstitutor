@@ -21,7 +21,7 @@ namespace ConfigurationSubstitution
             _endsWith = substitutableEndsWith;
             var escapedStart = Regex.Escape(_startsWith);
             var escapedEnd = Regex.Escape(_endsWith);
-            _findSubstitutions = new Regex(@"(?<=" + escapedStart + @")[^" + escapedStart + escapedEnd + "]*(?=" + escapedEnd + @")",
+            _findSubstitutions = new Regex("(?<=" + escapedStart + ")(.*?)(?=" + escapedEnd + ")",
                 RegexOptions.Compiled);
             _exceptionOnMissingVariables = exceptionOnMissingVariables;
         }
