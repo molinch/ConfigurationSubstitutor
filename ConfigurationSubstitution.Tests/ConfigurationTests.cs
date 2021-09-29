@@ -121,7 +121,7 @@ namespace ConfigurationSubstitution.Tests
             Func<string> func = () => configuration["Foo"];
 
             // Act & assert
-            func.Should().Throw<RecursiveConfigVariableException>();
+            func.Should().Throw<EndlessRecursionVariableException>();
         }
 
         [Fact]

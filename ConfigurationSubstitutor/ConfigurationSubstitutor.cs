@@ -10,7 +10,7 @@ namespace ConfigurationSubstitution
     {
         // A shared thread static to avoid allocation on each request.
         [ThreadStatic]
-        private static HashSet<string> inprogressCache;
+        private static HashSet<string> _recursionDetectionSet;
 
         private readonly string _startsWith;
         private readonly string _endsWith;
@@ -34,34 +34,34 @@ namespace ConfigurationSubstitution
 
         public string GetSubstituted(IConfiguration configuration, string key)
         {
-            if (inprogressCache == null)
+            if (_recursionDetectionSet == null)
             {
-                inprogressCache = new HashSet<string>();
+                _recursionDetectionSet = new HashSet<string>();
             }
 
-            inprogressCache.Clear();
-            return GetSubstituted(configuration, key, inprogressCache);
+            _recursionDetectionSet.Clear();
+            return GetSubstituted(configuration, key, _recursionDetectionSet);
         }
 
-        private string GetSubstituted(IConfiguration configuration, string key, HashSet<string> inprogress)
+        private string GetSubstituted(IConfiguration configuration, string key, HashSet<string> recursionDetectionSet)
         {
             var value = configuration[key];
             if (value == null) return value;
 
-            return ApplySubstitution(configuration, value, inprogress);
+            return ApplySubstitution(configuration, value, recursionDetectionSet);
         }
 
-        private string ApplySubstitution(IConfiguration configuration, string value, HashSet<string> inprogress)
+        private string ApplySubstitution(IConfiguration configuration, string value, HashSet<string> recursionDetectionSet)
         {
-            if (!inprogress.Add(value))
+            if (!recursionDetectionSet.Add(value))
             {
-                throw new RecursiveConfigVariableException(value);
+                throw new EndlessRecursionVariableException(value);
             }
 
             var captures = _findSubstitutions.Matches(value).Cast<Match>().SelectMany(m => m.Captures.Cast<Capture>());
             foreach (var capture in captures)
             {
-                var substitutedValue = this.GetSubstituted(configuration, capture.Value, inprogress);
+                var substitutedValue = this.GetSubstituted(configuration, capture.Value, recursionDetectionSet);
 
                 if (substitutedValue == null && _exceptionOnMissingVariables)
                 {
@@ -71,7 +71,7 @@ namespace ConfigurationSubstitution
                 value = value.Replace(_startsWith + capture.Value + _endsWith, substitutedValue);
             }
 
-            inprogress.Remove(value);
+            recursionDetectionSet.Remove(value);
 
             return value;
         }
