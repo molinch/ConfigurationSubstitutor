@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -6,6 +8,10 @@ namespace ConfigurationSubstitution
 {
     public class ConfigurationSubstitutor
     {
+        // A shared thread static to avoid allocation on each request.
+        [ThreadStatic]
+        private static HashSet<string> inprogressCache;
+
         private readonly string _startsWith;
         private readonly string _endsWith;
         private Regex _findSubstitutions;
@@ -28,18 +34,34 @@ namespace ConfigurationSubstitution
 
         public string GetSubstituted(IConfiguration configuration, string key)
         {
+            if (inprogressCache == null)
+            {
+                inprogressCache = new HashSet<string>();
+            }
+
+            inprogressCache.Clear();
+            return GetSubstituted(configuration, key, inprogressCache);
+        }
+
+        private string GetSubstituted(IConfiguration configuration, string key, HashSet<string> inprogress)
+        {
             var value = configuration[key];
             if (value == null) return value;
 
-            return ApplySubstitution(configuration, value);
+            return ApplySubstitution(configuration, value, inprogress);
         }
 
-        public string ApplySubstitution(IConfiguration configuration, string value)
+        private string ApplySubstitution(IConfiguration configuration, string value, HashSet<string> inprogress)
         {
+            if (!inprogress.Add(value))
+            {
+                throw new RecursiveConfigVariableException(value);
+            }
+
             var captures = _findSubstitutions.Matches(value).Cast<Match>().SelectMany(m => m.Captures.Cast<Capture>());
             foreach (var capture in captures)
             {
-                var substitutedValue = configuration[capture.Value];
+                var substitutedValue = this.GetSubstituted(configuration, capture.Value, inprogress);
 
                 if (substitutedValue == null && _exceptionOnMissingVariables)
                 {
@@ -48,6 +70,9 @@ namespace ConfigurationSubstitution
 
                 value = value.Replace(_startsWith + capture.Value + _endsWith, substitutedValue);
             }
+
+            inprogress.Remove(value);
+
             return value;
         }
     }

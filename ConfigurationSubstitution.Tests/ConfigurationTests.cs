@@ -86,6 +86,45 @@ namespace ConfigurationSubstitution.Tests
         }
 
         [Fact]
+        public void Should_get_substituted_value_when_nested()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "{Bar1}" },
+                    { "Bar1", "{Bar2}" },
+                    { "Bar2", "-Jean-" }
+                })
+                .EnableSubstitutions();
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("-Jean-");
+        }
+
+        [Fact]
+        public void Should_throw_exception_when_recursive()
+        {
+            var configurationBuilder = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "{Bar1}" },
+                    { "Bar1", "{Foo}" },
+                })
+                .EnableSubstitutions();
+
+            var configuration = configurationBuilder.Build();
+
+            Func<string> func = () => configuration["Foo"];
+
+            // Act & assert
+            func.Should().Throw<RecursiveConfigVariableException>();
+        }
+
+        [Fact]
         public void Should_get_substituted_value_when_different_start_end()
         {
             var configurationBuilder = new ConfigurationBuilder()
