@@ -8,12 +8,12 @@ namespace ConfigurationSubstitution
     public class ChainedSubstitutedConfigurationSource : IConfigurationSource
     {
         private readonly ConfigurationSubstitutor _substitutor;
-        private readonly IConfiguration _configuration;
+        private readonly IConfigurationRoot _root;
 
-        public ChainedSubstitutedConfigurationSource(ConfigurationSubstitutor substitutor, IConfiguration configuration)
+        public ChainedSubstitutedConfigurationSource(ConfigurationSubstitutor substitutor, IConfigurationRoot root)
         {
             _substitutor = substitutor;
-            _configuration = configuration;
+            _root = root;
         }
 
         /// <summary>
@@ -22,6 +22,6 @@ namespace ConfigurationSubstitution
         /// <param name="builder">The <see cref="IConfigurationBuilder"/>.</param>
         /// <returns>A <see cref="ChainedSubstitutedConfigurationProvider"/></returns>
         public IConfigurationProvider Build(IConfigurationBuilder builder)
-            => new ChainedSubstitutedConfigurationProvider(_configuration, _substitutor);
+            => new ChainedSubstitutedConfigurationProvider(_root, _substitutor);
     }
 }
