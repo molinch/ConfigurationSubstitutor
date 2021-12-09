@@ -14,9 +14,7 @@ namespace ConfigurationSubstitution
             return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables));
         }
 
-        private static IConfigurationBuilder EnableSubstitutions(
-            this IConfigurationBuilder builder,
-            ConfigurationSubstitutor substitutor)
+        private static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder,ConfigurationSubstitutor substitutor)
         {
             return builder.Add(new ChainedSubstitutedConfigurationSource(substitutor, builder.Build()));
         }
