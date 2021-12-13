@@ -8,8 +8,7 @@ namespace ConfigurationSubstitution.Tests
 {
     public class ConfigurationTests
     {
-        public delegate IConfigurationBuilder ConfigurationBuilderGenerator();
-        public static TheoryData<ConfigurationBuilderGenerator> ConfigurationBuilderTheoryData
+        public static TheoryData<Func<IConfigurationBuilder>> ConfigurationBuilderTheoryData
             = new()
             {
                 () => new ConfigurationBuilder(),
@@ -18,7 +17,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_substitution_is_in_middle(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_substitution_is_in_middle(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -38,7 +37,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_substitution_is_first(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_substitution_is_first(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -58,7 +57,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_substitution_is_last(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_substitution_is_last(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -78,7 +77,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_multiple_substitutions(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_multiple_substitutions(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -99,7 +98,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_nested(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_nested(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -120,7 +119,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_throw_exception_when_recursive(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_throw_exception_when_recursive(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -140,7 +139,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_different_start_end(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_different_start_end(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -160,7 +159,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_non_substituted_value_as_is(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_non_substituted_value_as_is(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -179,7 +178,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_throw_for_non_resolved_variable(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_throw_for_non_resolved_variable(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>
@@ -198,7 +197,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_ignore_non_resolved_variable(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_ignore_non_resolved_variable(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>
@@ -216,7 +215,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory] // covers https://github.com/molinch/ConfigurationSubstitutor/issues/4
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_multiple_matches_present(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_multiple_matches_present(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -237,7 +236,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_using_different_substituable_pattern(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_using_different_substituable_pattern(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -257,7 +256,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_not_get_substituted_value_when_no_match(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_not_get_substituted_value_when_no_match(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -276,7 +275,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_not_get_substituted_value_when_not_maching_start_tag(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_not_get_substituted_value_when_not_maching_start_tag(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -295,7 +294,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_not_get_substituted_value_when_no_end_tag(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_not_get_substituted_value_when_no_end_tag(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -314,7 +313,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_substitute_variable_when_substituted_value_is_empty(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_substitute_variable_when_substituted_value_is_empty(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -334,7 +333,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_throw_exception_when_substituted_value_is_null(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_throw_exception_when_substituted_value_is_null(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string?>()
@@ -354,7 +353,7 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_get_substituted_value_when_using_long_substituable_pattern(ConfigurationBuilderGenerator builderGenerator)
+        public void Should_get_substituted_value_when_using_long_substituable_pattern(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
