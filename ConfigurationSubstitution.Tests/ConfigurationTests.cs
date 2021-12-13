@@ -8,10 +8,18 @@ namespace ConfigurationSubstitution.Tests
 {
     public class ConfigurationTests
     {
-        [Fact]
-        public void Should_get_substituted_value_when_substitution_is_in_middle()
+        public static TheoryData<Func<IConfigurationBuilder>> ConfigurationBuilderTheoryData
+            = new()
+            {
+                () => new ConfigurationBuilder(),
+                () => new ConfigurationManager()
+            };
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_substitution_is_in_middle(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "ConnectionString", "blablabla&password={DatabasePassword}&server=localhost" },
@@ -27,10 +35,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("blablabla&password=ComplicatedPassword&server=localhost");
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_substitution_is_first()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_substitution_is_first(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "ConnectionString", "{DatabasePassword}&server=localhost" },
@@ -46,10 +55,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("ComplicatedPassword&server=localhost");
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_substitution_is_last()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_substitution_is_last(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "ConnectionString", "blablabla&password={DatabasePassword}" },
@@ -65,10 +75,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("blablabla&password=ComplicatedPassword");
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_multiple_substitutions()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_multiple_substitutions(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "{Bar1}{Bar2}{Bar1}" },
@@ -85,10 +96,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Barista-Jean-Barista");
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_nested()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_nested(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "{Bar1}" },
@@ -105,10 +117,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("-Jean-");
         }
 
-        [Fact]
-        public void Should_throw_exception_when_recursive()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_recursive(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "{Bar1}" },
@@ -124,10 +137,11 @@ namespace ConfigurationSubstitution.Tests
             func.Should().Throw<EndlessRecursionVariableException>();
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_different_start_end()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_different_start_end(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "yolo $(Bar) what's up?" },
@@ -143,10 +157,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("yolo boy what's up?");
         }
 
-        [Fact]
-        public void Should_get_non_substituted_value_as_is()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_non_substituted_value_as_is(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Bar", "Boyz n the hood" }
@@ -161,10 +176,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Boyz n the hood");
         }
 
-        [Fact]
-        public void Should_throw_for_non_resolved_variable()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_for_non_resolved_variable(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     { "TestKey", "Test value {Foobar}" }
@@ -179,10 +195,11 @@ namespace ConfigurationSubstitution.Tests
             act.Should().Throw<UndefinedConfigVariableException>().WithMessage("*variable*{Foobar}*");
         }
 
-        [Fact]
-        public void Should_ignore_non_resolved_variable()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_ignore_non_resolved_variable(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>
                 {
                     { "TestKey", "Test value {Foobar}" }
@@ -195,10 +212,12 @@ namespace ConfigurationSubstitution.Tests
             value.Should().Be("Test value ");
         }
 
-        [Fact] // covers https://github.com/molinch/ConfigurationSubstitutor/issues/4
-        public void Should_get_substituted_value_when_multiple_matches_present()
+
+        [Theory] // covers https://github.com/molinch/ConfigurationSubstitutor/issues/4
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_multiple_matches_present(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                 { "Foo", "Works with $(Var1) and $(Var2)" },
@@ -215,10 +234,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Works with one and two");
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_using_different_substituable_pattern()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_using_different_substituable_pattern(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                 { "Foo", "Hello <<Var>>" },
@@ -234,10 +254,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Hello world");
         }
 
-        [Fact]
-        public void Should_not_get_substituted_value_when_no_match()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_not_get_substituted_value_when_no_match(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                 { "Foo", "Hello world, nothing to see here" }
@@ -252,10 +273,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Hello world, nothing to see here");
         }
 
-        [Fact]
-        public void Should_not_get_substituted_value_when_not_maching_start_tag()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_not_get_substituted_value_when_not_maching_start_tag(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                 { "Foo", "Hello (world)" }
@@ -270,10 +292,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Hello (world)");
         }
 
-        [Fact]
-        public void Should_not_get_substituted_value_when_no_end_tag()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_not_get_substituted_value_when_no_end_tag(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                 { "Foo", "Hello $(Var what's up ?" }
@@ -288,10 +311,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Hello $(Var what's up ?");
         }
 
-        [Fact]
-        public void Should_substitute_variable_when_substituted_value_is_empty()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_substitute_variable_when_substituted_value_is_empty(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "$(Var1)" },
@@ -307,10 +331,11 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be(string.Empty);
         }
 
-        [Fact]
-        public void Should_throw_exception_when_substituted_value_is_null()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_substituted_value_is_null(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string?>()
                 {
                     { "Foo", "$(Var1)" },
@@ -326,10 +351,11 @@ namespace ConfigurationSubstitution.Tests
             func.Should().Throw<UndefinedConfigVariableException>();
         }
 
-        [Fact]
-        public void Should_get_substituted_value_when_using_long_substituable_pattern()
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_substituted_value_when_using_long_substituable_pattern(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = new ConfigurationBuilder()
+            var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "Hello %(env,Testo)%" },

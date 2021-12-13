@@ -12,12 +12,15 @@ namespace ConfigurationSubstitution
         private readonly ConfigurationSubstitutor _substitutor;
 
         /// <summary>
-        /// Initialize a new instance from the configuration.
+        /// Initialize a new instance from the configuration root.
         /// </summary>
-        /// <param name="config">The configuration.</param>
-        public ChainedSubstitutedConfigurationProvider(IConfiguration config, ConfigurationSubstitutor substitutor)
+        /// <param name="root">The configuration root.</param>
+        /// <param name="substitutor">Configuration substitutor</param>
+        public ChainedSubstitutedConfigurationProvider(
+            IConfigurationRoot root,
+            ConfigurationSubstitutor substitutor)
         {
-            _config = config;
+            _config = new ChainedSubstitutedConfigurationRoot(root);
             _substitutor = substitutor;
         }
 
