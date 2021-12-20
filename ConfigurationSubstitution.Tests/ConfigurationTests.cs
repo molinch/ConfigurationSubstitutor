@@ -370,5 +370,187 @@ namespace ConfigurationSubstitution.Tests
 
             substituted.Should().Be("Hello world");
         }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_substitute_when_delimited_fallback_default_value_provided(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Hello %(env:Testo)%" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("%(", ")%", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello Testo");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_substitute_variable_when_provided_and_not_fallback_default_value(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Hello $(Var1:Testo)" },
+                    { "Var1", "world" }
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Hello world");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_substitute_when_fallback_default_value_is_empty(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be(string.Empty);
+
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_fallback_default_value_delimiter_is_null(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", null);
+
+            var configuration = configurationBuilder.Build();
+
+            Func<string> func = () => configuration["Foo"];
+
+            // Act & assert
+            func.Should().Throw<UndefinedConfigVariableException>();
+
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_fallback_default_value_delimiter_is_empty(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", String.Empty);
+
+            var configuration = configurationBuilder.Build();
+
+            Func<string> func = () => configuration["Foo"];
+
+            // Act & assert
+            func.Should().Throw<UndefinedConfigVariableException>();
+
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_substitute_when_fallback_default_value_delimiter_is_a_space(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1 Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", " ");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Testo");
+
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_substitute_first_occurance_of_fallback_default_value_after_delimiter(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Val1:Val2)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Val1");
+
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_not_get_fallback_default_value_substituted_when_not_matching_delimiter(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1|Val)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Var1|Val");
+
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_fallback_default_values_substituted_when_multiple_matches_present(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Works with $(Var1), $(Var2:fbDefaulVal2) and $(Var3:fbDefaulVal3)" },
+                    { "Var1", "one" },
+                    { "Var3", "three" }
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Works with one, fbDefaulVal2 and three");
+
+        }
+        
     }
 }

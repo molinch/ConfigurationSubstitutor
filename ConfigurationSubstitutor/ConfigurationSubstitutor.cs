@@ -14,6 +14,7 @@ namespace ConfigurationSubstitution
 
         private readonly string _startsWith;
         private readonly string _endsWith;
+        private readonly string _fallbackDefaultValueDelimiter;
         private Regex _findSubstitutions;
         private readonly bool _exceptionOnMissingVariables;
 
@@ -21,12 +22,14 @@ namespace ConfigurationSubstitution
         {
         }
 
-        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true)
+        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, string fallbackDefaultValueDelimiter = "")
         {
             _startsWith = substitutableStartsWith;
             _endsWith = substitutableEndsWith;
+            _fallbackDefaultValueDelimiter = fallbackDefaultValueDelimiter;
             var escapedStart = Regex.Escape(_startsWith);
             var escapedEnd = Regex.Escape(_endsWith);
+
             _findSubstitutions = new Regex("(?<=" + escapedStart + ")(.*?)(?=" + escapedEnd + ")",
                 RegexOptions.Compiled);
             _exceptionOnMissingVariables = exceptionOnMissingVariables;
@@ -63,11 +66,28 @@ namespace ConfigurationSubstitution
             {
                 var substitutedValue = this.GetSubstituted(configuration, capture.Value, recursionDetectionSet);
 
-                if (substitutedValue == null && _exceptionOnMissingVariables)
+                if (substitutedValue == null && !string.IsNullOrEmpty(_fallbackDefaultValueDelimiter))
+                {
+                    var delimitedVals = capture.Value.Split(new[] { _fallbackDefaultValueDelimiter }, StringSplitOptions.None);
+                    // in case delimiter doesn't match
+                    if (delimitedVals.Length < 2)
+                    {
+                        return capture.Value;
+                    }
+                    value = value.Replace(capture.Value, delimitedVals[0]);
+                    // if EV is declared, have its value substituted  
+                    if (String.IsNullOrEmpty(configuration[delimitedVals[0]]))
+                    {
+                        configuration[delimitedVals[0]] = delimitedVals[1];
+                    }
+
+                    return ApplySubstitution(configuration, value, recursionDetectionSet);
+
+                }
+                else if (substitutedValue == null && _exceptionOnMissingVariables)
                 {
                     throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
                 }
-
                 value = value.Replace(_startsWith + capture.Value + _endsWith, substitutedValue);
             }
 

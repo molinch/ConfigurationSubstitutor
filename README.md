@@ -45,6 +45,17 @@ public static IHostBuilder CreateHostBuilder(string[] args) =>
 		});
 ```
 
+Moreover, you can also provide an in-line default value to fallback on in case a variable is missing, using the `EnableSubstitutionsWithDelimitedFallbackDefaults`. In such case, the delimiter string separating the variable name from the fallback default value must be provided (can't be `null` or empty).
+
+```c#
+public static IHostBuilder CreateHostBuilder(string[] args) =>
+	Host.CreateDefaultBuilder(args)
+		.ConfigureAppConfiguration((ctx, builder) =>
+		{
+			// if you have any additional configuration place it before
+			builder.EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
+		});
+```
 
 ## Examples
 
@@ -62,7 +73,7 @@ Easy-peasy `substituted` contains `blablabla&password=ComplicatedPassword&server
 
 ### More substitutions
 It supports any number of substitutions, for example if the configuration contains these three entries:
-- Foo = {Bar1}{Bar2}{Bar1}
+- Foo = {Bar1}{Bar2}{Bar1}{Bar3:-Doe}
 - Bar1 = Barista
 - Bar2 = -Jean-
 
@@ -70,4 +81,4 @@ It supports any number of substitutions, for example if the configuration contai
 var substituted = configuration["Foo"];
 ```
 
-Now `substituted` contains `Barista-Jean-Barista`
+Now `substituted` contains `Barista-Jean-Barista-Doe`
