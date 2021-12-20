@@ -497,7 +497,7 @@ namespace ConfigurationSubstitution.Tests
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
-                    { "Foo", "$(Var1:Val1:Val2)" },
+                    { "Foo", "$(Var1:http://example.com)" },
                 })
                 .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
 
@@ -506,7 +506,7 @@ namespace ConfigurationSubstitution.Tests
             // Act
             var substituted = configuration["Foo"];
 
-            substituted.Should().Be("Val1");
+            substituted.Should().Be("http://example.com");
 
         }
 

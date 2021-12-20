@@ -68,7 +68,7 @@ namespace ConfigurationSubstitution
 
                 if (substitutedValue == null && !string.IsNullOrEmpty(_fallbackDefaultValueDelimiter))
                 {
-                    var delimitedVals = capture.Value.Split(new[] { _fallbackDefaultValueDelimiter }, StringSplitOptions.None);
+                    var delimitedVals = capture.Value.Split(new[] { _fallbackDefaultValueDelimiter }, 2, StringSplitOptions.None);
                     // in case delimiter doesn't match
                     if (delimitedVals.Length < 2)
                     {
