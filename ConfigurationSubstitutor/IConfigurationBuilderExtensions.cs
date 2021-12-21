@@ -18,5 +18,10 @@ namespace ConfigurationSubstitution
         {
             return builder.Add(new ChainedSubstitutedConfigurationSource(substitutor, builder.Build()));
         }
+
+        public static IConfigurationBuilder EnableSubstitutionsWithDelimitedFallbackDefaults(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, string fallbackDefaultValueDelimiter, bool exceptionOnMissingVariables = true)
+        {
+            return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables, fallbackDefaultValueDelimiter));
+        }
     }
 }
