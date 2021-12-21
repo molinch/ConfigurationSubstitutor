@@ -24,9 +24,12 @@ namespace ConfigurationSubstitution
 
         public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, string fallbackDefaultValueDelimiter = "")
         {
-            _startsWith = substitutableStartsWith;
-            _endsWith = substitutableEndsWith;
-            _fallbackDefaultValueDelimiter = fallbackDefaultValueDelimiter;
+            _startsWith = !String.IsNullOrEmpty(substitutableStartsWith) ? substitutableStartsWith : throw new ArgumentException(
+                $"Invalid substitutableStartsWith value", nameof(substitutableStartsWith));
+            _endsWith = !String.IsNullOrEmpty(substitutableEndsWith) ? substitutableEndsWith : throw new ArgumentException(
+                $"Invalid substitutableEndsWith value", nameof(substitutableEndsWith));
+            _fallbackDefaultValueDelimiter = fallbackDefaultValueDelimiter ?? throw new ArgumentNullException(
+                nameof(fallbackDefaultValueDelimiter), $"Invalid fallbackDefaultValueDelimiter value");
             var escapedStart = Regex.Escape(_startsWith);
             var escapedEnd = Regex.Escape(_endsWith);
 

@@ -412,6 +412,106 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_substitutableStartsWith_is_null(Func<IConfigurationBuilder> builderGenerator)
+        {
+            Action act1 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutions(null, ")");
+
+            // Act & assert
+            act1.Should().Throw<ArgumentException>().WithParameterName("substitutableStartsWith");
+
+            Action act2 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults(null, ")", ":");
+
+            // Act & assert
+            act2.Should().Throw<ArgumentException>().WithParameterName("substitutableStartsWith");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_substitutableStartsWith_is_empty(Func<IConfigurationBuilder> builderGenerator)
+        {
+            Action act1 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutions("", ")");
+
+            // Act & assert
+            act1.Should().Throw<ArgumentException>().WithParameterName("substitutableStartsWith");
+
+            Action act2 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("", ")", ":");
+
+            // Act & assert
+            act2.Should().Throw<ArgumentException>().WithParameterName("substitutableStartsWith");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_substitutableEndsWith_is_null(Func<IConfigurationBuilder> builderGenerator)
+        {
+            Action act1 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutions("$(", null);
+
+            // Act & assert
+            act1.Should().Throw<ArgumentException>().WithParameterName("substitutableEndsWith");
+
+            Action act2 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", null, ":");
+
+            // Act & assert
+            act2.Should().Throw<ArgumentException>().WithParameterName("substitutableEndsWith");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_substitutableEndsWith_is_empty(Func<IConfigurationBuilder> builderGenerator)
+        {
+            Action act1 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutions("$(", "");
+
+            // Act & assert
+            act1.Should().Throw<ArgumentException>().WithParameterName("substitutableEndsWith");
+
+            Action act2 = () => builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", "", ":");
+
+            // Act & assert
+            act2.Should().Throw<ArgumentException>().WithParameterName("substitutableEndsWith");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
         public void Should_substitute_when_fallback_default_value_is_empty(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
@@ -434,25 +534,39 @@ namespace ConfigurationSubstitution.Tests
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
         public void Should_throw_exception_when_fallback_default_value_delimiter_is_null(Func<IConfigurationBuilder> builderGenerator)
         {
-            var configurationBuilder = builderGenerator()
+            Action act = () => builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
                     { "Foo", "$(Var1:Testo)" },
                 })
                 .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", null);
 
-            var configuration = configurationBuilder.Build();
-
-            Func<string> func = () => configuration["Foo"];
-
             // Act & assert
-            func.Should().Throw<UndefinedConfigVariableException>();
-
+            act.Should().Throw<ArgumentNullException>().WithParameterName("fallbackDefaultValueDelimiter");
         }
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_throw_exception_when_fallback_default_value_delimiter_is_empty(Func<IConfigurationBuilder> builderGenerator)
+        public void Should_substitute_when_fallback_default_value_delimiter_is_empty_with_substitutable_variable(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "$(Var1:Testo)" },
+                    { "Var1:Testo", "Bar"}
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", String.Empty);
+
+            var configuration = configurationBuilder.Build();
+
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Bar");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_fallback_default_value_delimiter_is_empty_without_substitutable_variable(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
@@ -466,6 +580,9 @@ namespace ConfigurationSubstitution.Tests
             Func<string> func = () => configuration["Foo"];
 
             // Act & assert
+            // Note: This assertion is NOT for ArgumentNullException nor ArgumentNullException, because it's valid to
+            //        pass an empty string delimiter constructor-wise. However, in this particular example variable
+            //        'Var1:Testo' doesn't exist, thus the UndefinedConfigVariableException exception is thrown.
             func.Should().Throw<UndefinedConfigVariableException>();
 
         }
@@ -551,6 +668,6 @@ namespace ConfigurationSubstitution.Tests
             substituted.Should().Be("Works with one, fbDefaulVal2 and three");
 
         }
-        
+
     }
 }
