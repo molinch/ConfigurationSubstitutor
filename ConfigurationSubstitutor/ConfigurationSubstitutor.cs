@@ -17,6 +17,7 @@ namespace ConfigurationSubstitution
         private readonly string _fallbackDefaultValueDelimiter;
         private Regex _findSubstitutions;
         private readonly bool _exceptionOnMissingVariables;
+        private Dictionary<string, string> _varsOfFallbackDefaults;
 
         public ConfigurationSubstitutor(bool exceptionOnMissingVariables = true) : this("{", "}", exceptionOnMissingVariables)
         {
@@ -30,6 +31,7 @@ namespace ConfigurationSubstitution
                 $"Invalid substitutableEndsWith value", nameof(substitutableEndsWith));
             _fallbackDefaultValueDelimiter = fallbackDefaultValueDelimiter ?? throw new ArgumentNullException(
                 nameof(fallbackDefaultValueDelimiter), $"Invalid fallbackDefaultValueDelimiter value");
+            _varsOfFallbackDefaults = new Dictionary<string, string>();
             var escapedStart = Regex.Escape(_startsWith);
             var escapedEnd = Regex.Escape(_endsWith);
 
@@ -52,7 +54,14 @@ namespace ConfigurationSubstitution
         private string GetSubstituted(IConfiguration configuration, string key, HashSet<string> recursionDetectionSet)
         {
             var value = configuration[key];
-            if (value == null) return value;
+            if (value == null && _varsOfFallbackDefaults.ContainsKey(key))
+            {
+                value = _varsOfFallbackDefaults[key];
+            }
+            else if (value == null)
+            {
+                return null;
+            }
 
             return ApplySubstitution(configuration, value, recursionDetectionSet);
         }
@@ -79,7 +88,7 @@ namespace ConfigurationSubstitution
                         // if declared EV isn't resolvable, assign it to provided fallback default value
                         if (String.IsNullOrEmpty(configuration[delimitedVals[0]]))
                         {
-                            configuration[delimitedVals[0]] = delimitedVals[1];
+                            _varsOfFallbackDefaults.Add(delimitedVals[0], delimitedVals[1]);
                         }
 
                         return ApplySubstitution(configuration, value, recursionDetectionSet);
