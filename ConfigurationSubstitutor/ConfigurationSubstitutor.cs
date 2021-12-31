@@ -72,22 +72,21 @@ namespace ConfigurationSubstitution
                 if (substitutedValue == null && !string.IsNullOrEmpty(_fallbackDefaultValueDelimiter))
                 {
                     var delimitedVals = capture.Value.Split(new[] { _fallbackDefaultValueDelimiter }, 2, StringSplitOptions.None);
-                    // in case delimiter doesn't match
-                    if (delimitedVals.Length < 2)
+                    // in case delimiter matches
+                    if (delimitedVals.Length == 2)
                     {
-                        return capture.Value;
-                    }
-                    value = value.Replace(capture.Value, delimitedVals[0]);
-                    // if EV is declared, have its value substituted  
-                    if (String.IsNullOrEmpty(configuration[delimitedVals[0]]))
-                    {
-                        configuration[delimitedVals[0]] = delimitedVals[1];
-                    }
+                        value = value.Replace(capture.Value, delimitedVals[0]);
+                        // if declared EV isn't resolvable, assign it to provided fallback default value
+                        if (String.IsNullOrEmpty(configuration[delimitedVals[0]]))
+                        {
+                            configuration[delimitedVals[0]] = delimitedVals[1];
+                        }
 
-                    return ApplySubstitution(configuration, value, recursionDetectionSet);
+                        return ApplySubstitution(configuration, value, recursionDetectionSet);
+                    }
 
                 }
-                else if (substitutedValue == null && _exceptionOnMissingVariables)
+                if (substitutedValue == null && _exceptionOnMissingVariables)
                 {
                     throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
                 }
