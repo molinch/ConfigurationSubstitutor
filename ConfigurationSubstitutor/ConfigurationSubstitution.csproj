@@ -18,8 +18,10 @@
     <RepositoryType>GitHub</RepositoryType>
     <PackageProjectUrl>https://github.com/molinch/ConfigurationSubstitutor</PackageProjectUrl>
     <PackageTags>netcore options configuration substitute substitution substituted variable aspnet</PackageTags>
-    <Version>1.4.0</Version>
+    <Version>1.4.1</Version>
     <PackageReleaseNotes>
+		v1.4.1
+		- Minor fix for .EnableSubstitutionsWithDelimitedFallbackDefaults()
 		v1.4.0
 		- Allow substitutions to have a default, see: .EnableSubstitutionsWithDelimitedFallbackDefaults()
 		v1.3.0
