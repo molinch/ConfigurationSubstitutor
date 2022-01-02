@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -17,6 +18,7 @@ namespace ConfigurationSubstitution
         private readonly string _fallbackDefaultValueDelimiter;
         private Regex _findSubstitutions;
         private readonly bool _exceptionOnMissingVariables;
+        private ConcurrentDictionary<string, string> _fallbackDefaults;
 
         public ConfigurationSubstitutor(bool exceptionOnMissingVariables = true) : this("{", "}", exceptionOnMissingVariables)
         {
@@ -24,12 +26,13 @@ namespace ConfigurationSubstitution
 
         public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, string fallbackDefaultValueDelimiter = "")
         {
-            _startsWith = !String.IsNullOrEmpty(substitutableStartsWith) ? substitutableStartsWith : throw new ArgumentException(
+            _startsWith = !string.IsNullOrEmpty(substitutableStartsWith) ? substitutableStartsWith : throw new ArgumentException(
                 $"Invalid substitutableStartsWith value", nameof(substitutableStartsWith));
-            _endsWith = !String.IsNullOrEmpty(substitutableEndsWith) ? substitutableEndsWith : throw new ArgumentException(
+            _endsWith = !string.IsNullOrEmpty(substitutableEndsWith) ? substitutableEndsWith : throw new ArgumentException(
                 $"Invalid substitutableEndsWith value", nameof(substitutableEndsWith));
             _fallbackDefaultValueDelimiter = fallbackDefaultValueDelimiter ?? throw new ArgumentNullException(
                 nameof(fallbackDefaultValueDelimiter), $"Invalid fallbackDefaultValueDelimiter value");
+            _fallbackDefaults = new ConcurrentDictionary<string, string>();
             var escapedStart = Regex.Escape(_startsWith);
             var escapedEnd = Regex.Escape(_endsWith);
 
@@ -52,7 +55,14 @@ namespace ConfigurationSubstitution
         private string GetSubstituted(IConfiguration configuration, string key, HashSet<string> recursionDetectionSet)
         {
             var value = configuration[key];
-            if (value == null) return value;
+            if (value == null && _fallbackDefaults.TryGetValue(key, out var defaultValue))
+            {
+                value = defaultValue;
+            }
+            else if (value == null)
+            {
+                return null;
+            }
 
             return ApplySubstitution(configuration, value, recursionDetectionSet);
         }
@@ -67,27 +77,26 @@ namespace ConfigurationSubstitution
             var captures = _findSubstitutions.Matches(value).Cast<Match>().SelectMany(m => m.Captures.Cast<Capture>());
             foreach (var capture in captures)
             {
-                var substitutedValue = this.GetSubstituted(configuration, capture.Value, recursionDetectionSet);
+                var substitutedValue = GetSubstituted(configuration, capture.Value, recursionDetectionSet);
 
                 if (substitutedValue == null && !string.IsNullOrEmpty(_fallbackDefaultValueDelimiter))
                 {
                     var delimitedVals = capture.Value.Split(new[] { _fallbackDefaultValueDelimiter }, 2, StringSplitOptions.None);
-                    // in case delimiter doesn't match
-                    if (delimitedVals.Length < 2)
+                    // in case delimiter matches
+                    if (delimitedVals.Length == 2)
                     {
-                        return capture.Value;
-                    }
-                    value = value.Replace(capture.Value, delimitedVals[0]);
-                    // if EV is declared, have its value substituted  
-                    if (String.IsNullOrEmpty(configuration[delimitedVals[0]]))
-                    {
-                        configuration[delimitedVals[0]] = delimitedVals[1];
-                    }
+                        value = value.Replace(capture.Value, delimitedVals[0]);
+                        // if declared configuration value isn't resolvable, assign it to provided fallback default value
+                        if (string.IsNullOrEmpty(configuration[delimitedVals[0]]))
+                        {
+                            _fallbackDefaults[delimitedVals[0]] = delimitedVals[1];
+                        }
 
-                    return ApplySubstitution(configuration, value, recursionDetectionSet);
+                        return ApplySubstitution(configuration, value, recursionDetectionSet);
+                    }
 
                 }
-                else if (substitutedValue == null && _exceptionOnMissingVariables)
+                if (substitutedValue == null && _exceptionOnMissingVariables)
                 {
                     throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
                 }

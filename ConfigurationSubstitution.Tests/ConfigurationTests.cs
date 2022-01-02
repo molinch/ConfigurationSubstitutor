@@ -119,22 +119,65 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_throw_exception_when_recursive(Func<IConfigurationBuilder> builderGenerator)
+        public void Should_get_substituted_value_when_nested_with_fallback_default_values(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
                 .AddInMemoryCollection(new Dictionary<string, string>()
                 {
-                    { "Foo", "{Bar1}" },
-                    { "Bar1", "{Foo}" },
+                    { "Foo", "{Bar1:default_value_1}" },
+                    { "Bar1", "{Bar2:default_value_2}" },
+                    { "Bar2", "-Jean-" }
                 })
-                .EnableSubstitutions();
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("{", "}", ":");
 
             var configuration = configurationBuilder.Build();
 
-            Func<string> func = () => configuration["Foo"];
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("-Jean-");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_recursive(Func<IConfigurationBuilder> builderGenerator)
+        {
+            Action act1 = () =>
+            {
+                var configurationBuilder = builderGenerator()
+                    .AddInMemoryCollection(new Dictionary<string, string>()
+                    {
+                        { "Foo", "{Bar1}" },
+                        { "Bar1", "{Foo}" },
+                    })
+                    .EnableSubstitutions();
+
+                var configuration = configurationBuilder.Build();
+
+                var substituted = configuration["Foo"];
+            };
 
             // Act & assert
-            func.Should().Throw<EndlessRecursionVariableException>();
+            act1.Should().Throw<EndlessRecursionVariableException>();
+
+            Action act2 = () =>
+            {
+                var configurationBuilder = builderGenerator()
+                    .AddInMemoryCollection(new Dictionary<string, string>()
+                    {
+                        { "Foo", "{Bar1:default_value}" },
+                        { "Bar1", "{Foo}" },
+                    })
+                    .EnableSubstitutionsWithDelimitedFallbackDefaults("{", "}", ":");
+
+                var configuration = configurationBuilder.Build();
+
+                var substituted = configuration["Foo"];
+            };
+
+            // Act & assert
+            act2.Should().Throw<EndlessRecursionVariableException>();
+
         }
 
         [Theory]
@@ -197,6 +240,26 @@ namespace ConfigurationSubstitution.Tests
 
         [Theory]
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_for_non_resolved_variable_and_mismatch_fallback_default_value_delimiter(
+            Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "TestKey", "Test value {Foobar}" }
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("{", "}", ":");
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            Action act = () => _ = configuration["TestKey"];
+
+            act.Should().Throw<UndefinedConfigVariableException>().WithMessage("*variable*{Foobar}*");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
         public void Should_ignore_non_resolved_variable(Func<IConfigurationBuilder> builderGenerator)
         {
             var configurationBuilder = builderGenerator()
@@ -205,6 +268,23 @@ namespace ConfigurationSubstitution.Tests
                     { "TestKey", "Test value {Foobar}" }
                 })
                 .EnableSubstitutions(exceptionOnMissingVariables: false);
+
+            var configuration = configurationBuilder.Build();
+
+            var value = configuration["TestKey"];
+            value.Should().Be("Test value ");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_ignore_non_resolved_variable_and_mismatch_fallback_default_value_delimiter(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    { "TestKey", "Test value {Foobar}" }
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("{", "}", ":", false);
 
             var configuration = configurationBuilder.Build();
 
@@ -342,6 +422,26 @@ namespace ConfigurationSubstitution.Tests
                     { "Var1", null }
                 })
                 .EnableSubstitutions("$(", ")");
+
+            var configuration = configurationBuilder.Build();
+
+            Func<string> func = () => configuration["Foo"];
+
+            // Act & assert
+            func.Should().Throw<UndefinedConfigVariableException>();
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_exception_when_substituted_value_is_null_and_mismatch_fallback_default_value_delimiter(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string?>()
+                {
+                    { "Foo", "$(Var1)" },
+                    { "Var1", null }
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
 
             var configuration = configurationBuilder.Build();
 
@@ -624,26 +724,6 @@ namespace ConfigurationSubstitution.Tests
             var substituted = configuration["Foo"];
 
             substituted.Should().Be("http://example.com");
-
-        }
-
-        [Theory]
-        [MemberData(nameof(ConfigurationBuilderTheoryData))]
-        public void Should_not_get_fallback_default_value_substituted_when_not_matching_delimiter(Func<IConfigurationBuilder> builderGenerator)
-        {
-            var configurationBuilder = builderGenerator()
-                .AddInMemoryCollection(new Dictionary<string, string>()
-                {
-                    { "Foo", "$(Var1|Val)" },
-                })
-                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":");
-
-            var configuration = configurationBuilder.Build();
-
-            // Act
-            var substituted = configuration["Foo"];
-
-            substituted.Should().Be("Var1|Val");
 
         }
 
