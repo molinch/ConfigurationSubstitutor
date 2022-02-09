@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 
 namespace ConfigurationSubstitution
 {
@@ -18,13 +18,14 @@ namespace ConfigurationSubstitution
         private readonly string _fallbackDefaultValueDelimiter;
         private Regex _findSubstitutions;
         private readonly bool _exceptionOnMissingVariables;
+        private readonly bool _keepNonResolvedVariables;
         private ConcurrentDictionary<string, string> _fallbackDefaults;
 
         public ConfigurationSubstitutor(bool exceptionOnMissingVariables = true) : this("{", "}", exceptionOnMissingVariables)
         {
         }
 
-        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, string fallbackDefaultValueDelimiter = "")
+        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, string fallbackDefaultValueDelimiter = "", bool keepNonResolvedVariables = false)
         {
             _startsWith = !string.IsNullOrEmpty(substitutableStartsWith) ? substitutableStartsWith : throw new ArgumentException(
                 $"Invalid substitutableStartsWith value", nameof(substitutableStartsWith));
@@ -39,6 +40,7 @@ namespace ConfigurationSubstitution
             _findSubstitutions = new Regex("(?<=" + escapedStart + ")(.*?)(?=" + escapedEnd + ")",
                 RegexOptions.Compiled);
             _exceptionOnMissingVariables = exceptionOnMissingVariables;
+            _keepNonResolvedVariables = keepNonResolvedVariables;
         }
 
         public string GetSubstituted(IConfiguration configuration, string key)
@@ -94,12 +96,18 @@ namespace ConfigurationSubstitution
 
                         return ApplySubstitution(configuration, value, recursionDetectionSet);
                     }
-
                 }
+
                 if (substitutedValue == null && _exceptionOnMissingVariables)
                 {
                     throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
                 }
+
+                if (substitutedValue == null && _keepNonResolvedVariables)
+                {
+                    continue;
+                }
+
                 value = value.Replace(_startsWith + capture.Value + _endsWith, substitutedValue);
             }
 

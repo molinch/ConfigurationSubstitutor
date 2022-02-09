@@ -9,9 +9,9 @@ namespace ConfigurationSubstitution
             return EnableSubstitutions(builder, new ConfigurationSubstitutor(exceptionOnMissingVariables));
         }
 
-        public static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true)
+        public static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, bool keepNonResolvedVariables = false)
         {
-            return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables));
+            return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables, keepNonResolvedVariables: keepNonResolvedVariables));
         }
 
         private static IConfigurationBuilder EnableSubstitutions(this IConfigurationBuilder builder, ConfigurationSubstitutor substitutor)
@@ -19,9 +19,9 @@ namespace ConfigurationSubstitution
             return builder.Add(new ChainedSubstitutedConfigurationSource(substitutor, builder.Build()));
         }
 
-        public static IConfigurationBuilder EnableSubstitutionsWithDelimitedFallbackDefaults(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, string fallbackDefaultValueDelimiter, bool exceptionOnMissingVariables = true)
+        public static IConfigurationBuilder EnableSubstitutionsWithDelimitedFallbackDefaults(this IConfigurationBuilder builder, string substitutableStartsWith, string substitutableEndsWith, string fallbackDefaultValueDelimiter, bool exceptionOnMissingVariables = true, bool keepNonResolvedVariables = false)
         {
-            return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables, fallbackDefaultValueDelimiter));
+            return EnableSubstitutions(builder, new ConfigurationSubstitutor(substitutableStartsWith, substitutableEndsWith, exceptionOnMissingVariables, fallbackDefaultValueDelimiter, keepNonResolvedVariables));
         }
     }
 }

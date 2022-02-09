@@ -1,7 +1,7 @@
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace ConfigurationSubstitution.Tests
@@ -177,7 +177,6 @@ namespace ConfigurationSubstitution.Tests
 
             // Act & assert
             act2.Should().Throw<EndlessRecursionVariableException>();
-
         }
 
         [Theory]
@@ -291,7 +290,6 @@ namespace ConfigurationSubstitution.Tests
             var value = configuration["TestKey"];
             value.Should().Be("Test value ");
         }
-
 
         [Theory] // covers https://github.com/molinch/ConfigurationSubstitutor/issues/4
         [MemberData(nameof(ConfigurationBuilderTheoryData))]
@@ -627,7 +625,6 @@ namespace ConfigurationSubstitution.Tests
             var substituted = configuration["Foo"];
 
             substituted.Should().Be(string.Empty);
-
         }
 
         [Theory]
@@ -684,7 +681,6 @@ namespace ConfigurationSubstitution.Tests
             //        pass an empty string delimiter constructor-wise. However, in this particular example variable
             //        'Var1:Testo' doesn't exist, thus the UndefinedConfigVariableException exception is thrown.
             func.Should().Throw<UndefinedConfigVariableException>();
-
         }
 
         [Theory]
@@ -704,7 +700,6 @@ namespace ConfigurationSubstitution.Tests
             var substituted = configuration["Foo"];
 
             substituted.Should().Be("Testo");
-
         }
 
         [Theory]
@@ -724,7 +719,6 @@ namespace ConfigurationSubstitution.Tests
             var substituted = configuration["Foo"];
 
             substituted.Should().Be("http://example.com");
-
         }
 
         [Theory]
@@ -746,8 +740,65 @@ namespace ConfigurationSubstitution.Tests
             var substituted = configuration["Foo"];
 
             substituted.Should().Be("Works with one, fbDefaulVal2 and three");
-
         }
 
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_throw_for_non_resolved_variable_when_keepNonResolvedVariables_is_true(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Counting: $(MisingVar)" }
+                })
+                .EnableSubstitutions("$(", ")", exceptionOnMissingVariables: true, keepNonResolvedVariables: true);
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            Action act = () => _ = configuration["Foo"];
+
+            act.Should().Throw<UndefinedConfigVariableException>().WithMessage("*variable*$(MisingVar)*");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_unsubstituted_value_when_keepNonResolvedVariables_is_true(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Counting: $(MisingVar)" }
+                })
+                .EnableSubstitutions("$(", ")", exceptionOnMissingVariables: false, keepNonResolvedVariables: true);
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Counting: $(MisingVar)");
+        }
+
+        [Theory]
+        [MemberData(nameof(ConfigurationBuilderTheoryData))]
+        public void Should_get_unsubstituted_value_and_fallback_value(Func<IConfigurationBuilder> builderGenerator)
+        {
+            var configurationBuilder = builderGenerator()
+                .AddInMemoryCollection(new Dictionary<string, string>()
+                {
+                    { "Foo", "Counting: $(MissingVar1), $(MissingVar2:defaultTwo), $(Var3:defaultThree) and $(Var4)." },
+                    { "Var3", "three" },
+                    { "Var4", "four" }
+                })
+                .EnableSubstitutionsWithDelimitedFallbackDefaults("$(", ")", ":", exceptionOnMissingVariables: false, keepNonResolvedVariables: true);
+
+            var configuration = configurationBuilder.Build();
+
+            // Act
+            var substituted = configuration["Foo"];
+
+            substituted.Should().Be("Counting: $(MissingVar1), defaultTwo, three and four.");
+        }
     }
 }
