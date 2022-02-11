@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 
 namespace ConfigurationSubstitution
 {
@@ -17,14 +17,28 @@ namespace ConfigurationSubstitution
         private readonly string _endsWith;
         private readonly string _fallbackDefaultValueDelimiter;
         private Regex _findSubstitutions;
-        private readonly bool _exceptionOnMissingVariables;
+        private readonly UnresolvedVariableBehaviour _unresolvedVariableBehaviour;
         private ConcurrentDictionary<string, string> _fallbackDefaults;
 
+        [Obsolete]
         public ConfigurationSubstitutor(bool exceptionOnMissingVariables = true) : this("{", "}", exceptionOnMissingVariables)
         {
         }
 
+        public ConfigurationSubstitutor(UnresolvedVariableBehaviour unresolvedVariableBehaviour = UnresolvedVariableBehaviour.Throw) : this("{", "}", unresolvedVariableBehaviour)
+        {
+        }
+
+        [Obsolete]
         public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, bool exceptionOnMissingVariables = true, string fallbackDefaultValueDelimiter = "")
+            : this(substitutableStartsWith,
+                  substitutableEndsWith,
+                  exceptionOnMissingVariables ? UnresolvedVariableBehaviour.Throw : UnresolvedVariableBehaviour.IgnorePattern,
+                  fallbackDefaultValueDelimiter)
+        {
+        }
+
+        public ConfigurationSubstitutor(string substitutableStartsWith, string substitutableEndsWith, UnresolvedVariableBehaviour unresolvedVariableBehaviour = UnresolvedVariableBehaviour.Throw, string fallbackDefaultValueDelimiter = "")
         {
             _startsWith = !string.IsNullOrEmpty(substitutableStartsWith) ? substitutableStartsWith : throw new ArgumentException(
                 $"Invalid substitutableStartsWith value", nameof(substitutableStartsWith));
@@ -38,7 +52,8 @@ namespace ConfigurationSubstitution
 
             _findSubstitutions = new Regex("(?<=" + escapedStart + ")(.*?)(?=" + escapedEnd + ")",
                 RegexOptions.Compiled);
-            _exceptionOnMissingVariables = exceptionOnMissingVariables;
+
+            _unresolvedVariableBehaviour = unresolvedVariableBehaviour;
         }
 
         public string GetSubstituted(IConfiguration configuration, string key)
@@ -94,12 +109,26 @@ namespace ConfigurationSubstitution
 
                         return ApplySubstitution(configuration, value, recursionDetectionSet);
                     }
+                }
 
-                }
-                if (substitutedValue == null && _exceptionOnMissingVariables)
+                if (substitutedValue == null)
                 {
-                    throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
+                    switch (_unresolvedVariableBehaviour)
+                    {
+                        case UnresolvedVariableBehaviour.IgnorePattern:
+                            // continue to value replacement
+                            break;
+
+                        case UnresolvedVariableBehaviour.KeepPattern:
+                            // continue to next captured variable
+                            continue;
+
+                        case UnresolvedVariableBehaviour.Throw:
+                        default:
+                            throw new UndefinedConfigVariableException($"{_startsWith}{capture.Value}{_endsWith}");
+                    }
                 }
+
                 value = value.Replace(_startsWith + capture.Value + _endsWith, substitutedValue);
             }
 
