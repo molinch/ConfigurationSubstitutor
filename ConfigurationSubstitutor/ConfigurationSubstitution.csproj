@@ -12,7 +12,7 @@
       Scenarios could be that you have the password from an Azure KeyVault and the connection string defined in appsettings. The connection string can reference the password.
       Another scenario is that you have multiple configuration entries for the same domain, don't duplicate that information anymore, reference it.
     </Description>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <RepositoryUrl>https://github.com/molinch/ConfigurationSubstitutor</RepositoryUrl>
     <RepositoryType>GitHub</RepositoryType>
